@@ -1,12 +1,10 @@
-package mongo
+package service
 
 import (
-	"fmt"
 	"strconv"
-	"time"
 
 	mongoModel "clean-arch/app/model/mongo"
-	"clean-arch/app/repository"
+	repo "clean-arch/app/repository/mongo" // alias untuk package repository/mongo
 
 	"github.com/gofiber/fiber/v2"
 	mgo "go.mongodb.org/mongo-driver/mongo"
@@ -21,7 +19,7 @@ func CreateAchievementService(c *fiber.Ctx, db *mgo.Database) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	created, err := repository.CreateAchievement(db, &req)
+	created, err := repo.CreateAchievement(db, &req)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -36,7 +34,7 @@ func GetAchievementService(c *fiber.Ctx, db *mgo.Database) error {
 	if id == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "id required"})
 	}
-	a, err := repository.GetAchievementByID(db, id)
+	a, err := repo.GetAchievementByID(db, id)
 	if err != nil {
 		// if not found, repository returns mongo.ErrNoDocuments
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "not found"})
@@ -59,7 +57,7 @@ func UpdateAchievementService(c *fiber.Ctx, db *mgo.Database) error {
 	delete(update, "_id")
 	delete(update, "createdAt")
 
-	if err := repository.UpdateAchievement(db, id, bson.M(update)); err != nil {
+	if err := repo.UpdateAchievement(db, id, bson.M(update)); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"status": "updated"})
@@ -71,7 +69,7 @@ func DeleteAchievementService(c *fiber.Ctx, db *mgo.Database) error {
 	if id == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "id required"})
 	}
-	if err := repository.SoftDeleteAchievement(db, id); err != nil {
+	if err := repo.SoftDeleteAchievement(db, id); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"status": "deleted"})
@@ -83,7 +81,7 @@ func HardDeleteAchievementService(c *fiber.Ctx, db *mgo.Database) error {
 	if id == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "id required"})
 	}
-	if err := repository.HardDeleteAchievement(db, id); err != nil {
+	if err := repo.HardDeleteAchievement(db, id); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"status": "removed"})
@@ -122,7 +120,8 @@ func ListAchievementsService(c *fiber.Ctx, db *mgo.Database) error {
 		}
 	}
 
-	out, total, err := repository.ListAchievements(db, filter, int(page), int(limit))
+	// Kirim page & limit sebagai int64 — diasumsikan repository.ListAchievements menerima int64
+	out, total, err := repo.ListAchievements(db, filter, page, limit)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}

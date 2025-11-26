@@ -1,10 +1,10 @@
-package postgre
+package service
 
 import (
 	"context"
 
 	"clean-arch/app/model/postgre"
-	"clean-arch/app/repository"
+	"clean-arch/app/repository/postgre"
 	"github.com/gofiber/fiber/v2"
 )
 

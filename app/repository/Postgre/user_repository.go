@@ -6,7 +6,7 @@ import (
 	"errors"
 	"time"
 
-	"clean-arch/app/database"
+	"clean-arch/database"
 	"clean-arch/app/model/postgre"
 
 	"github.com/google/uuid"

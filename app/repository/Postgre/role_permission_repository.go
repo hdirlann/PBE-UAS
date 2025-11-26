@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"clean-arch/app/database"
+	"clean-arch/database"
 )
 
 func AssignPermissionToRole(ctx context.Context, roleID, permissionID string) error {

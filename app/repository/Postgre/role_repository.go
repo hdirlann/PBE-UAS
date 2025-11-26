@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"clean-arch/app/model/postgre"
-	"clean-arch/app/database"
+	"clean-arch/database"
 	"github.com/google/uuid"
 )
 
