@@ -1,10 +1,10 @@
-package service
+﻿package service
 
 import (
 	"strconv"
 
-	mongoModel "clean-arch/app/model/mongo"
-	repo "clean-arch/app/repository/mongo" // alias untuk package repository/mongo
+	mongoModel "clean-arch/app/model"
+	repo "clean-arch/app/repository" // alias untuk package repository/mongo
 
 	"github.com/gofiber/fiber/v2"
 	mgo "go.mongodb.org/mongo-driver/mongo"
@@ -120,7 +120,7 @@ func ListAchievementsService(c *fiber.Ctx, db *mgo.Database) error {
 		}
 	}
 
-	// Kirim page & limit sebagai int64 — diasumsikan repository.ListAchievements menerima int64
+	// Kirim page & limit sebagai int64 â€” diasumsikan repository.ListAchievements menerima int64
 	out, total, err := repo.ListAchievements(db, filter, page, limit)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})

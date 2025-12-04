@@ -1,11 +1,11 @@
-package service
+﻿package service
 
 import (
 	"context"
 	"time"
 
-	"clean-arch/app/model/postgre"
-	"clean-arch/app/repository/postgre"
+	"clean-arch/app/model"
+	"clean-arch/app/repository"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -20,7 +20,7 @@ func CreateAchievementReferenceService(c *fiber.Ctx) error {
 	if body.StudentID == "" || body.MongoID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error":"studentId and mongoId required"})
 	}
-	ref := &postgre.AchievementReference{
+	ref := &model.AchievementReference{
 		StudentID:          body.StudentID,
 		MongoAchievementID: body.MongoID,
 		Status:             "draft",

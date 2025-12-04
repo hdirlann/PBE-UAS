@@ -1,4 +1,4 @@
-package postgre
+package model
 
 type Permission struct {
     ID          string `db:"id" json:"id"`

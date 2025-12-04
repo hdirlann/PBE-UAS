@@ -3,32 +3,35 @@ package route
 import (
 	"github.com/gofiber/fiber/v2"
 
-	pgSrv "clean-arch/app/service/postgre"
+	pgSrv "clean-arch/app/service"
+	"clean-arch/middleware"
 )
 
-// RegisterPsqlRoutes registers routes that use PostgreSQL (users, roles, students, lecturers, refs)
 func RegisterPsqlRoutes(app *fiber.App) {
-	v1 := app.Group("/api/v1")
+	public := app.Group("/api/v1")
+	public.Post("/auth/login", pgSrv.AuthenticateService)
 
-	// Auth & Users
-	v1.Post("/auth/login", pgSrv.AuthenticateService)
-	v1.Post("/users", pgSrv.CreateUserService)
-	// Roles
-	v1.Post("/roles", pgSrv.CreateRoleService)
-	v1.Get("/roles/:name", pgSrv.GetRoleByNameService)
+	protected := app.Group("/api/v1", middleware.JWTMiddleware())
 
-	// Students
-	v1.Post("/students", pgSrv.CreateStudentService)
-	v1.Get("/students/:id", pgSrv.GetStudentService)
-	v1.Get("/students/advisor/:advisorId", pgSrv.ListStudentsByAdvisorService)
+	// users (example permission strings)
+	protected.Post("/users", middleware.RequirePermission("users.create"), pgSrv.CreateUserService)
 
-	// Lecturers
-	v1.Post("/lecturers", pgSrv.CreateLecturerService)
-	v1.Get("/lecturers/:id", pgSrv.GetLecturerService)
+	// roles
+	protected.Post("/roles", middleware.RequirePermission("roles.create"), pgSrv.CreateRoleService)
+	protected.Get("/roles/:name", pgSrv.GetRoleByNameService)
 
-	// Achievement references (workflow)
-	v1.Post("/refs", pgSrv.CreateAchievementReferenceService)
-	v1.Post("/refs/:id/submit", pgSrv.SubmitAchievementReferenceService)
-	v1.Post("/refs/:id/verify", pgSrv.VerifyAchievementReferenceService)
-	v1.Post("/refs/:id/reject", pgSrv.RejectAchievementReferenceService)
+	// students
+	protected.Post("/students", middleware.RequirePermission("students.create"), pgSrv.CreateStudentService)
+	protected.Get("/students/:id", middleware.RequirePermission("students.view"), pgSrv.GetStudentService)
+	protected.Get("/students/advisor/:advisorId", middleware.RequirePermission("students.view"), pgSrv.ListStudentsByAdvisorService)
+
+	// lecturers
+	protected.Post("/lecturers", middleware.RequirePermission("lecturers.create"), pgSrv.CreateLecturerService)
+	protected.Get("/lecturers/:id", middleware.RequirePermission("lecturers.view"), pgSrv.GetLecturerService)
+
+	// achievement refs workflow
+	protected.Post("/refs", middleware.RequirePermission("refs.create"), pgSrv.CreateAchievementReferenceService)
+	protected.Post("/refs/:id/submit", middleware.RequirePermission("refs.submit"), pgSrv.SubmitAchievementReferenceService)
+	protected.Post("/refs/:id/verify", middleware.RequirePermission("refs.verify"), pgSrv.VerifyAchievementReferenceService)
+	protected.Post("/refs/:id/reject", middleware.RequirePermission("refs.reject"), pgSrv.RejectAchievementReferenceService)
 }

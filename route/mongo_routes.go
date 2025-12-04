@@ -1,8 +1,8 @@
 package route
 
 import (
-	"clean-arch/app/database"
-	mongoSrv "clean-arch/app/service/mongo"
+	"clean-arch/database"
+	mongoSrv "clean-arch/app/service"
 
 	"github.com/gofiber/fiber/v2"
 )

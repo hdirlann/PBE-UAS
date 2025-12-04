@@ -6,12 +6,12 @@ import (
 	"errors"
 	"time"
 
-	"clean-arch/app/model/postgre"
+	"clean-arch/app/model"
 	"clean-arch/database"
 	"github.com/google/uuid"
 )
 
-func CreateLecturer(ctx context.Context, l *postgre.Lecturer) error {
+func CreateLecturer(ctx context.Context, l *model.Lecturer) error {
 	if l.ID == "" {
 		l.ID = uuid.New().String()
 	}
@@ -22,8 +22,8 @@ func CreateLecturer(ctx context.Context, l *postgre.Lecturer) error {
 	return err
 }
 
-func GetLecturerByID(ctx context.Context, id string) (*postgre.Lecturer, error) {
-	var l postgre.Lecturer
+func GetLecturerByID(ctx context.Context, id string) (*model.Lecturer, error) {
+	var l model.Lecturer
 	q := `SELECT id,user_id,lecturer_id,department,created_at FROM lecturers WHERE id=$1`
 	row := database.PostgresDB.QueryRowContext(ctx, q, id)
 	if err := row.Scan(&l.ID, &l.UserID, &l.LecturerID, &l.Department, &l.CreatedAt); err != nil {

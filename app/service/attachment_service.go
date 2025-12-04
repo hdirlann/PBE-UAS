@@ -1,8 +1,8 @@
-package service
+﻿package service
 
 import (
-	"clean-arch/app/model/mongo"
-	"clean-arch/app/repository/mongo"
+	"clean-arch/app/model"
+	"clean-arch/app/repository"
 
 	"github.com/gofiber/fiber/v2"
 	mgo "go.mongodb.org/mongo-driver/mongo"

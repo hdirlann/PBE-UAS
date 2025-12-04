@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	mongoModel "clean-arch/app/model/mongo"
+	mongoModel "clean-arch/app/model"
 
 	"go.mongodb.org/mongo-driver/bson"
 	mgo "go.mongodb.org/mongo-driver/mongo"

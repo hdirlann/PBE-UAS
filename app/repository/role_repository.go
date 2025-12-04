@@ -6,12 +6,12 @@ import (
 	"errors"
 	"time"
 
-	"clean-arch/app/model/postgre"
+	"clean-arch/app/model"
 	"clean-arch/database"
 	"github.com/google/uuid"
 )
 
-func CreateRole(ctx context.Context, r *postgre.Role) error {
+func CreateRole(ctx context.Context, r *model.Role) error {
 	if r.ID == "" {
 		r.ID = uuid.New().String()
 	}
@@ -21,8 +21,8 @@ func CreateRole(ctx context.Context, r *postgre.Role) error {
 	return err
 }
 
-func GetRoleByName(ctx context.Context, name string) (*postgre.Role, error) {
-	var r postgre.Role
+func GetRoleByName(ctx context.Context, name string) (*model.Role, error) {
+	var r model.Role
 	q := `SELECT id,name,description,created_at FROM roles WHERE name=$1`
 	row := database.PostgresDB.QueryRowContext(ctx, q, name)
 	if err := row.Scan(&r.ID, &r.Name, &r.Desc, &r.CreatedAt); err != nil {
@@ -32,8 +32,8 @@ func GetRoleByName(ctx context.Context, name string) (*postgre.Role, error) {
 	return &r, nil
 }
 
-func GetRoleByID(ctx context.Context, id string) (*postgre.Role, error) {
-	var r postgre.Role
+func GetRoleByID(ctx context.Context, id string) (*model.Role, error) {
+	var r model.Role
 	q := `SELECT id,name,description,created_at FROM roles WHERE id=$1`
 	row := database.PostgresDB.QueryRowContext(ctx, q, id)
 	if err := row.Scan(&r.ID, &r.Name, &r.Desc, &r.CreatedAt); err != nil {

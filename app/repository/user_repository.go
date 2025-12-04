@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"clean-arch/database"
-	"clean-arch/app/model/postgre"
+	"clean-arch/app/model"
 
 	"github.com/google/uuid"
 )
 
-func CreateUser(ctx context.Context, u *postgre.User) error {
+func CreateUser(ctx context.Context, u *model.User) error {
 	if u.ID == "" {
 		u.ID = uuid.New().String()
 	}
@@ -26,8 +26,8 @@ func CreateUser(ctx context.Context, u *postgre.User) error {
 	return err
 }
 
-func GetUserByID(ctx context.Context, id string) (*postgre.User, error) {
-	var u postgre.User
+func GetUserByID(ctx context.Context, id string) (*model.User, error) {
+	var u model.User
 	q := `SELECT id,username,email,password_hash,full_name,role_id,is_active,created_at,updated_at FROM users WHERE id=$1`
 	row := database.PostgresDB.QueryRowContext(ctx, q, id)
 	if err := row.Scan(&u.ID, &u.Username, &u.Email, &u.PasswordHash, &u.FullName, &u.RoleID, &u.IsActive, &u.CreatedAt, &u.UpdatedAt); err != nil {
@@ -39,8 +39,8 @@ func GetUserByID(ctx context.Context, id string) (*postgre.User, error) {
 	return &u, nil
 }
 
-func GetUserByUsernameOrEmail(ctx context.Context, identifier string) (*postgre.User, error) {
-	var u postgre.User
+func GetUserByUsernameOrEmail(ctx context.Context, identifier string) (*model.User, error) {
+	var u model.User
 	q := `SELECT id,username,email,password_hash,full_name,role_id,is_active,created_at,updated_at FROM users WHERE username=$1 OR email=$1`
 	row := database.PostgresDB.QueryRowContext(ctx, q, identifier)
 	if err := row.Scan(&u.ID, &u.Username, &u.Email, &u.PasswordHash, &u.FullName, &u.RoleID, &u.IsActive, &u.CreatedAt, &u.UpdatedAt); err != nil {
@@ -50,7 +50,7 @@ func GetUserByUsernameOrEmail(ctx context.Context, identifier string) (*postgre.
 	return &u, nil
 }
 
-func UpdateUser(ctx context.Context, u *postgre.User) error {
+func UpdateUser(ctx context.Context, u *model.User) error {
 	u.UpdatedAt = time.Now()
 	q := `UPDATE users SET username=$1,email=$2,password_hash=$3,full_name=$4,role_id=$5,is_active=$6,updated_at=$7 WHERE id=$8`
 	_, err := database.PostgresDB.ExecContext(ctx, q, u.Username, u.Email, u.PasswordHash, u.FullName, u.RoleID, u.IsActive, u.UpdatedAt, u.ID)

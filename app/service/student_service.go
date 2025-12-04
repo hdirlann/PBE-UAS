@@ -1,15 +1,15 @@
-package service
+﻿package service
 
 import (
 	"context"
 
-	"clean-arch/app/model/postgre"
-	"clean-arch/app/repository/postgre"
+	"clean-arch/app/model"
+	"clean-arch/app/repository"
 	"github.com/gofiber/fiber/v2"
 )
 
 func CreateStudentService(c *fiber.Ctx) error {
-	var s postgre.Student
+	var s model.Student
 	if err := c.BodyParser(&s); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}

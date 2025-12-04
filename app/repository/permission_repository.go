@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	model "clean-arch/app/model/postgre" // import model Permission
+	model "clean-arch/app/model" // import model Permission
 
 	"github.com/google/uuid"
 )

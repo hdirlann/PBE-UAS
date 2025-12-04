@@ -6,12 +6,12 @@ import (
 	"errors"
 	"time"
 
-	"clean-arch/app/model/postgre"
+	"clean-arch/app/model"
 	"clean-arch/database"
 	"github.com/google/uuid"
 )
 
-func CreateAchievementReference(ctx context.Context, ref *postgre.AchievementReference) error {
+func CreateAchievementReference(ctx context.Context, ref *model.AchievementReference) error {
 	if ref.ID == "" {
 		ref.ID = uuid.New().String()
 	}
@@ -24,10 +24,10 @@ func CreateAchievementReference(ctx context.Context, ref *postgre.AchievementRef
 	return err
 }
 
-func GetAchievementReferenceByID(ctx context.Context, id string) (*postgre.AchievementReference, error) {
+func GetAchievementReferenceByID(ctx context.Context, id string) (*model.AchievementReference, error) {
 	q := `SELECT id,student_id,mongo_achievement_id,status,submitted_at,verified_at,verified_by,rejection_note,created_at,updated_at FROM achievement_references WHERE id=$1`
 	row := database.PostgresDB.QueryRowContext(ctx, q, id)
-	var ref postgre.AchievementReference
+	var ref model.AchievementReference
 	var submitted, verified sql.NullTime
 	var verifiedBy, rejectionNote sql.NullString
 	if err := row.Scan(&ref.ID, &ref.StudentID, &ref.MongoAchievementID, &ref.Status, &submitted, &verified, &verifiedBy, &rejectionNote, &ref.CreatedAt, &ref.UpdatedAt); err != nil {

@@ -1,10 +1,10 @@
-package service
+﻿package service
 
 import (
 	"context"
 
-	"clean-arch/app/model/postgre"
-	"clean-arch/app/repository/postgre"
+	"clean-arch/app/model"
+	"clean-arch/app/repository"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -16,7 +16,7 @@ func CreateRoleService(c *fiber.Ctx) error {
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
-	r := &postgre.Role{Name: body.Name, Desc: body.Desc}
+	r := &model.Role{Name: body.Name, Desc: body.Desc}
 	if err := repository.CreateRole(context.Background(), r); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}

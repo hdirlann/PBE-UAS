@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"clean-arch/database"
-	"clean-arch/app/model/postgre"
+	"clean-arch/app/model"
 
 	"github.com/google/uuid"
 )
 
-func CreateStudent(ctx context.Context, s *postgre.Student) error {
+func CreateStudent(ctx context.Context, s *model.Student) error {
 	if s.ID == "" {
 		s.ID = uuid.New().String()
 	}
@@ -23,8 +23,8 @@ func CreateStudent(ctx context.Context, s *postgre.Student) error {
 	return err
 }
 
-func GetStudentByID(ctx context.Context, id string) (*postgre.Student, error) {
-	var s postgre.Student
+func GetStudentByID(ctx context.Context, id string) (*model.Student, error) {
+	var s model.Student
 	q := `SELECT id,user_id,student_id,program_study,academic_year,advisor_id,created_at FROM students WHERE id=$1`
 	row := database.PostgresDB.QueryRowContext(ctx, q, id)
 	var advisor sql.NullString
@@ -36,14 +36,14 @@ func GetStudentByID(ctx context.Context, id string) (*postgre.Student, error) {
 	return &s, nil
 }
 
-func ListStudentsByAdvisor(ctx context.Context, advisorID string) ([]postgre.Student, error) {
+func ListStudentsByAdvisor(ctx context.Context, advisorID string) ([]model.Student, error) {
 	q := `SELECT id,user_id,student_id,program_study,academic_year,advisor_id,created_at FROM students WHERE advisor_id=$1`
 	rows, err := database.PostgresDB.QueryContext(ctx, q, advisorID)
 	if err != nil { return nil, err }
 	defer rows.Close()
-	var out []postgre.Student
+	var out []model.Student
 	for rows.Next() {
-		var s postgre.Student
+		var s model.Student
 		var advisor sql.NullString
 		if err := rows.Scan(&s.ID,&s.UserID,&s.StudentID,&s.ProgramStudy,&s.AcademicYear,&advisor,&s.CreatedAt); err != nil {
 			return nil, err
