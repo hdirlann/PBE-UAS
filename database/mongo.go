@@ -2,42 +2,53 @@ package database
 
 import (
 	"context"
-	"log"
-	"os"
+	"fmt"
 	"time"
+
+	"clean-arch/config"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 var MongoDB *mongo.Database
+var MongoClient *mongo.Client
 
-// ConnectMongo reads MONGO_URI & MONGO_DBNAME from env and connect
-func ConnectMongo() error {
-	uri := os.Getenv("MONGO_URI")
-	dbname := os.Getenv("MONGO_DBNAME")
-	if uri == "" {
-		uri = "mongodb://localhost:27017"
+// ConnectMongo connects to MongoDB and sets package-level MongoClient and MongoDB
+func ConnectMongo(ctx context.Context, env *config.Env) error {
+	if env == nil {
+		return fmt.Errorf("env is nil")
 	}
-	if dbname == "" {
-		dbname = "appdb"
-	}
+	clientOpts := options.Client().ApplyURI(env.MongoURI)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	clientOpts := options.Client().ApplyURI(uri)
-	client, err := mongo.Connect(ctx, clientOpts)
+	client, err := mongo.NewClient(clientOpts)
 	if err != nil {
-		return err
+		return fmt.Errorf("mongo.NewClient: %w", err)
 	}
 
-	// ping
-	if err := client.Ping(ctx, nil); err != nil {
-		return err
+	// connect with the parent ctx (so cancellation from caller works)
+	if err := client.Connect(ctx); err != nil {
+		return fmt.Errorf("mongo.Connect: %w", err)
 	}
 
-	MongoDB = client.Database(dbname)
-	log.Printf("connected to mongo: %s (db=%s)\n", uri, dbname)
+	// ping with short timeout
+	ctxPing, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	if err := client.Ping(ctxPing, readpref.Primary()); err != nil {
+		_ = client.Disconnect(ctxPing)
+		return fmt.Errorf("mongo.Ping: %w", err)
+	}
+
+	MongoClient = client
+	MongoDB = client.Database(env.MongoDB)
 	return nil
+}
+
+// CloseMongo disconnects the global Mongo client
+func CloseMongo(ctx context.Context) error {
+	if MongoClient == nil {
+		return nil
+	}
+	return MongoClient.Disconnect(ctx)
 }

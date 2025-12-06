@@ -1,16 +1,12 @@
 package model
 
-import (
-	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
-)
+import "time"
 
 type Attachment struct {
-	ID            primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	AchievementID string             `bson:"achievementId" json:"achievementId"`
-	FileName      string             `bson:"fileName" json:"fileName"`
-	FileURL       string             `bson:"fileUrl" json:"fileUrl"`
-	FileType      string             `bson:"fileType" json:"fileType"`
-	UploadedAt    time.Time          `bson:"uploadedAt" json:"uploadedAt"`
+    ID            string    `bson:"_id,omitempty" json:"id"`
+    AchievementID string    `bson:"achievement_id" json:"achievement_id"`
+    FileName      string    `bson:"file_name" json:"file_name"`
+    FileURL       string    `bson:"file_url" json:"file_url"`
+    FileType      string    `bson:"file_type" json:"file_type"`
+    CreatedAt     time.Time `bson:"created_at" json:"created_at"`
 }

@@ -17,7 +17,10 @@ func AddAttachment(db *mgo.Database, a *mongoModel.Attachment) (*mongoModel.Atta
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	col := db.Collection(attachmentsCollection)
-	a.UploadedAt = time.Now()
+
+	// set CreatedAt here (service doesn't need to)
+	a.CreatedAt = time.Now()
+
 	_, err := col.InsertOne(ctx, a)
 	if err != nil {
 		return nil, err
@@ -30,11 +33,14 @@ func ListAttachmentsByAchievement(db *mgo.Database, achievementID string) ([]mon
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	col := db.Collection(attachmentsCollection)
-	cur, err := col.Find(ctx, bson.M{"achievementId": achievementID})
+
+	// use bson key that matches your model tag: "achievement_id"
+	cur, err := col.Find(ctx, bson.M{"achievement_id": achievementID})
 	if err != nil {
 		return nil, err
 	}
 	defer cur.Close(ctx)
+
 	var out []mongoModel.Attachment
 	if err := cur.All(ctx, &out); err != nil {
 		return nil, err

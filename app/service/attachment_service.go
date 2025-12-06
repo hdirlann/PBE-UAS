@@ -9,7 +9,6 @@ import (
 )
 
 // AddAttachmentService handles POST /api/v1/achievements/:id/attachments
-// expects JSON body { fileName, fileUrl, fileType } OR you can adapt for multipart upload.
 func AddAttachmentService(c *fiber.Ctx, db *mgo.Database) error {
 	achID := c.Params("id")
 	if achID == "" {
@@ -25,11 +24,12 @@ func AddAttachmentService(c *fiber.Ctx, db *mgo.Database) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	attach := &mongo.Attachment{
+	attach := &model.Attachment{
 		AchievementID: achID,
 		FileName:      body.FileName,
 		FileURL:       body.FileURL,
 		FileType:      body.FileType,
+		// don't set CreatedAt here; repository will set it
 	}
 
 	res, err := repository.AddAttachment(db, attach)
