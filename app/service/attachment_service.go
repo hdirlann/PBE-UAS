@@ -9,6 +9,18 @@ import (
 )
 
 // AddAttachmentService handles POST /api/v1/achievements/:id/attachments
+// @Summary Add attachment to achievement
+// @Tags Attachments
+// @Description Add an attachment (file meta) to an achievement document.
+// @Accept json
+// @Produce json
+// @Param id path string true "Achievement ID"
+// @Param body body object true "Attachment body" example({"fileName":"dok.pdf","fileUrl":"https://...","fileType":"pdf"})
+// @Success 201 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Security Bearer
+// @Router /achievements/{id}/attachments [post]
 func AddAttachmentService(c *fiber.Ctx, db *mgo.Database) error {
 	achID := c.Params("id")
 	if achID == "" {
@@ -29,7 +41,6 @@ func AddAttachmentService(c *fiber.Ctx, db *mgo.Database) error {
 		FileName:      body.FileName,
 		FileURL:       body.FileURL,
 		FileType:      body.FileType,
-		// don't set CreatedAt here; repository will set it
 	}
 
 	res, err := repository.AddAttachment(db, attach)
@@ -39,7 +50,17 @@ func AddAttachmentService(c *fiber.Ctx, db *mgo.Database) error {
 	return c.Status(fiber.StatusCreated).JSON(res)
 }
 
-// ListAttachmentsService handles GET /api/v1/achievements/:id/attachments
+// ListAttachmentsService
+// @Summary List attachments for achievement
+// @Tags Attachments
+// @Description List attachments for an achievement.
+// @Param id path string true "Achievement ID"
+// @Produce json
+// @Success 200 {array} model.Attachment
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Security Bearer
+// @Router /achievements/{id}/attachments [get]
 func ListAttachmentsService(c *fiber.Ctx, db *mgo.Database) error {
 	achID := c.Params("id")
 	if achID == "" {

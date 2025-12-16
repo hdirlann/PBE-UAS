@@ -78,3 +78,35 @@ func ListStudentsByAdvisor(ctx context.Context, advisorID string) ([]model.Stude
 	}
 	return out, nil
 }
+
+// UpdateStudentAdvisor updates advisor_id for a student
+func UpdateStudentAdvisor(ctx context.Context, studentID, advisorID string) error {
+	q := `UPDATE students SET advisor_id=$1, updated_at=now() WHERE id=$2`
+	_, err := database.PostgresDB.ExecContext(ctx, q, advisorID, studentID)
+	return err
+}
+
+func GetStudentByUserID(ctx context.Context, userID string) (*model.Student, error) {
+	row := database.PostgresDB.QueryRowContext(ctx,
+		`SELECT id, user_id, student_id, program_study, academic_year, advisor_id, created_at
+		 FROM students WHERE user_id = $1`,
+		userID,
+	)
+
+	var s model.Student
+	if err := row.Scan(
+		&s.ID,
+		&s.UserID,
+		&s.StudentID,
+		&s.ProgramStudy,
+		&s.AcademicYear,
+		&s.AdvisorID,
+		&s.CreatedAt,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &s, nil
+}

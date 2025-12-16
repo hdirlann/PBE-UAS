@@ -1,3 +1,19 @@
+// main.go
+//
+// @title Alumni / Prestasi Management API
+// @version 1.0
+// @description API untuk mengelola prestasi / alumni (Postgres + Mongo) menggunakan Clean Architecture
+// @termsOfService http://swagger.io/terms/
+// @contact.name API Support
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+// @host localhost:3000
+// @BasePath /api/v1
+// @schemes http
+// @securityDefinitions.apikey Bearer
+// @in header
+// @name Authorization
+// @description Type "Bearer " followed by a JWT token
 package main
 
 import (
@@ -12,36 +28,38 @@ import (
 	"clean-arch/route"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/joho/godotenv"
+
+	// swagger handler for fiber
+	"github.com/gofiber/swagger"
+
+	// import generated swagger docs (created by `swag init`)
+	_ "clean-arch/docs"
 )
 
 func main() {
-	// load .env (optional)
-	_ = godotenv.Load()
-
-	// load config
+	// load environment
 	env := config.LoadEnv()
 
-	// context for DB connections and shutdown
+	// context to control DB connect / shutdown
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// connect Postgres (this function must set database.PostgresDB for compatibility)
+	// Connect Postgres (sets database.PostgresDB)
 	if err := database.ConnectPostgres(env); err != nil {
-		log.Fatalf("failed connect postgres: %v", err)
+		log.Fatalf("failed to connect to postgres: %v", err)
 	}
-	// ensure postgres closed on exit (will be attempted again in shutdown)
+	// ensure Postgres closed on exit
 	defer func() {
 		if database.PostgresDB != nil {
 			_ = database.PostgresDB.Close()
 		}
 	}()
 
-	// connect Mongo (expects ConnectMongo(ctx, env) which sets database.MongoClient & database.MongoDB)
+	// Connect Mongo (sets database.MongoClient & database.MongoDB)
 	if err := database.ConnectMongo(ctx, env); err != nil {
-		log.Fatalf("failed connect mongo: %v", err)
+		log.Fatalf("failed to connect to mongo: %v", err)
 	}
-	// ensure mongo disconnect on exit
+	// ensure mongo disconnected on exit
 	defer func() {
 		if database.MongoClient != nil {
 			_ = database.MongoClient.Disconnect(ctx)
@@ -55,38 +73,46 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	})
 
-	// health-check
+	// health check
 	app.Get("/health", func(c *fiber.Ctx) error {
-		return c.SendString("ok")
+		return c.Status(fiber.StatusOK).SendString("ok")
 	})
 
-	// register routes (these functions should exist under package route)
-	// If your register functions need DB references, adjust signatures accordingly.
-	route.RegisterPsqlRoutes(app)
-	route.RegisterMongoRoutes(app)
+	// swagger UI (after you generate docs with swag)
+	// browse to: http://localhost:3000/swagger/index.html
+	app.Get("/swagger/*", swagger.HandlerDefault)
 
-	// start server in goroutine
-	addr := ":" + env.AppPort
+	// Register application routes (single entrypoint)
+	// Replace old RegisterPsqlRoutes + RegisterMongoRoutes with RegisterAPIRoutes
+	route.RegisterAPIRoutes(app)
+
+	// start server (graceful shutdown support)
+	port := env.AppPort
+	if port == "" {
+		port = "3000"
+	}
+	addr := ":" + port
+
 	serverErr := make(chan error, 1)
 	go func() {
 		log.Printf("server listening on %s", addr)
 		serverErr <- app.Listen(addr)
 	}()
 
-	// wait for interrupt or server error
+	// Wait for SIGINT or server error
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 
 	select {
 	case sig := <-quit:
-		log.Printf("signal %v received, shutting down...", sig)
+		log.Printf("signal %v received - shutting down...", sig)
 	case err := <-serverErr:
 		if err != nil {
 			log.Printf("server error: %v", err)
 		}
 	}
 
-	// graceful shutdown
+	// graceful shutdown with timeout
 	shutdownCtx, cancelShutdown := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancelShutdown()
 
