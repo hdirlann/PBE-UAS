@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"strconv"
 	"time"
+	"strings"
 
 	mongoModel "clean-arch/app/model"
 	repo "clean-arch/app/repository" // alias untuk package repository
@@ -387,31 +388,72 @@ func VerifyAchievementService(c *fiber.Ctx, db *mgo.Database) error {
 
 // RejectAchievementService handles POST /achievements/:id/reject
 // Flow: lecturer rejects with a note
+// RejectAchievementService handles POST /achievements/:id/reject
+// Flow: lecturer rejects with a note
 func RejectAchievementService(c *fiber.Ctx, db *mgo.Database) error {
+	ctx := context.Background()
 	mongoID := c.Params("id")
 	if mongoID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "id required"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "id required",
+		})
 	}
-	var body struct{ Note string `json:"note"` }
-	if err := c.BodyParser(&body); err != nil || body.Note == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "note required"})
+
+	// ✅ FIX: pakai rejection_note
+	var body struct {
+		RejectionNote string `json:"rejection_note"`
 	}
+
+	if err := c.BodyParser(&body); err != nil || strings.TrimSpace(body.RejectionNote) == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "note required",
+		})
+	}
+
 	verifierID, _ := c.Locals(middleware.LocalsUserID).(string)
 	if verifierID == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthenticated"})
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "unauthenticated",
+		})
 	}
-	ref, err := repo.GetAchievementReferenceByMongoID(context.Background(), mongoID)
+
+	ref, err := repo.GetAchievementReferenceByMongoID(ctx, mongoID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 	if ref == nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "reference not found"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "reference not found",
+		})
 	}
-	if err := repo.UpdateAchievementReferenceStatus(context.Background(), ref.ID, "rejected", &verifierID, &body.Note); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+
+	// ✅ VALIDASI STATUS SESUAI SRS
+	if ref.Status != "submitted" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "only submitted achievement can be rejected",
+		})
 	}
-	return c.JSON(fiber.Map{"message": "rejected", "referenceId": ref.ID})
+
+	if err := repo.UpdateAchievementReferenceStatus(
+		ctx,
+		ref.ID,
+		"rejected",
+		&verifierID,
+		&body.RejectionNote,
+	); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message":     "rejected",
+		"referenceId": ref.ID,
+	})
 }
+
 
 // GetAchievementHistoryService handles GET /achievements/:id/history
 func GetAchievementHistoryService(c *fiber.Ctx, db *mgo.Database) error {

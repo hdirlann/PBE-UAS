@@ -142,7 +142,7 @@ func SetStudentAdvisorService(c *fiber.Ctx) error {
 	// try repository update function if present
 	if err := repository.UpdateStudentAdvisor(context.Background(), id, body.AdvisorID); err != nil {
 		// fallback to direct exec
-		_, err2 := database.PostgresDB.ExecContext(context.Background(), `UPDATE students SET advisor_id=$1, updated_at=now() WHERE id=$2`, body.AdvisorID, id)
+		_, err2 := database.PostgresDB.ExecContext(context.Background(), `UPDATE students SET advisor_id=$1 WHERE id=$2`, body.AdvisorID, id)
 		if err2 != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err2.Error()})
 		}
